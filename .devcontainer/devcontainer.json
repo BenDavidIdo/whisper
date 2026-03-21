@@ -1,0 +1,16 @@
+{
+    "name": "Whisper Flow Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "features": {},
+    "postCreateCommand": "apt-get update && apt-get install -y portaudio19-dev ffmpeg && pip install -r requirements.txt && pip install -e .",
+    "forwardPorts": [8181],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.black-formatter",
+                "ms-python.pylint"
+            ]
+        }
+    }
+}

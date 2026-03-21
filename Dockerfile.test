@@ -1,0 +1,28 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    portaudio19-dev \
+    build-essential \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+RUN pip install --no-cache-dir -e .
+
+# Format check
+RUN black --check whisperflow/ tests/
+
+# Lint (require score >= 9.9)
+RUN pylint whisperflow/ --fail-under=9.9
+
+# Tests with coverage requirement
+RUN pytest tests/ \
+    --cov=whisperflow \
+    --cov-report=term-missing \
+    --cov-fail-under=95 \
+    -v
