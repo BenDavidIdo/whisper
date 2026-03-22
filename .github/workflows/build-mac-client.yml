@@ -50,8 +50,8 @@ jobs:
             --onedir \
             --name whisper-server \
             --collect-all whisper \
-            --add-data "whisperflow:whisperflow" \
-            --add-data "whisperflow/models:models" \
+            --add-data "$(pwd)/whisperflow:whisperflow" \
+            --add-data "$(pwd)/whisperflow/models:models" \
             --hidden-import=uvicorn.main \
             --hidden-import=uvicorn.config \
             --hidden-import=uvicorn.protocols.http.auto \
