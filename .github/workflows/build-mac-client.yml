@@ -42,16 +42,7 @@ jobs:
       - name: Download Whisper tiny.en model
         run: |
           mkdir -p whisperflow/models
-          python - <<'EOF'
-          import whisper, os, shutil
-          # Download to default cache then copy to repo models dir
-          m = whisper.load_model("tiny.en")
-          src = os.path.expanduser("~/.cache/whisper/tiny.en.pt")
-          dst = "whisperflow/models/tiny.en.pt"
-          if not os.path.exists(dst):
-              shutil.copy(src, dst)
-          print("Model ready:", os.path.getsize(dst), "bytes")
-          EOF
+          python3 -c "import whisper; whisper.load_model('tiny.en', download_root='whisperflow/models')"
 
       - name: Build server binary (PyInstaller)
         run: |
@@ -59,8 +50,13 @@ jobs:
             --onedir \
             --name whisper-server \
             --collect-all whisper \
-            --collect-all torch \
+            --add-data "whisperflow:whisperflow" \
             --add-data "whisperflow/models:models" \
+            --hidden-import=uvicorn.main \
+            --hidden-import=uvicorn.config \
+            --hidden-import=uvicorn.protocols.http.auto \
+            --hidden-import=uvicorn.protocols.websockets.auto \
+            --hidden-import=uvicorn.lifespan.on \
             --distpath mac-client/server-dist \
             --workpath /tmp/pyinstaller-build \
             --specpath /tmp \

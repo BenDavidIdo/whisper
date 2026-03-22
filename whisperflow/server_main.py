@@ -15,12 +15,14 @@ if getattr(sys, 'frozen', False):
         os.path.join(sys._MEIPASS, 'models'),
     )
 
-import uvicorn  # noqa: E402 — import after env var is set
+# Import the app object directly so PyInstaller can trace all dependencies.
+from whisperflow.fast_server import app  # noqa: E402
+import uvicorn  # noqa: E402
 
 if __name__ == '__main__':
     port = int(os.environ.get('WHISPERFLOW_PORT', '8181'))
     uvicorn.run(
-        'whisperflow.fast_server:app',
+        app,
         host='127.0.0.1',
         port=port,
         log_level='warning',
