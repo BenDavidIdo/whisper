@@ -1,18 +1,17 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@main/*": ["src/main/*"],
-      "@preload/*": ["src/preload/*"]
-    },
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "out"
+    "outDir": "out",
+    "baseUrl": ".",
+    "paths": {
+      "@main/*": ["src/main/*"],
+      "@preload/*": ["src/preload/*"]
+    }
   },
   "include": ["src/main/**/*", "src/preload/**/*", "electron.vite.config.*"]
 }
