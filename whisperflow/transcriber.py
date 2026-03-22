@@ -1,6 +1,8 @@
 """Transcriber module: model loading and audio inference."""
 
 import asyncio
+import os
+
 import numpy as np
 
 models = {}
@@ -19,7 +21,8 @@ def get_model(file_name="tiny.en.pt"):
     import torch
 
     if file_name not in models:
-        model_path = f"./whisperflow/models/{file_name}"
+        models_dir = os.environ.get('WHISPERFLOW_MODELS_DIR', './whisperflow/models')
+        model_path = os.path.join(models_dir, file_name)
         device = "cuda" if torch.cuda.is_available() else "cpu"
         models[file_name] = whisper.load_model(model_path, device=device)
     return models[file_name]

@@ -43,7 +43,13 @@
       "hardenedRuntime": false
     },
     "files": ["out/**/*"],
-    "extraResources": [],
+    "extraResources": [
+      {
+        "from": "server-dist/whisper-server",
+        "to": "server",
+        "filter": ["**/*"]
+      }
+    ],
     "npmRebuild": false
   }
 }

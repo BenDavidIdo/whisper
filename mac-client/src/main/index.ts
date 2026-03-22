@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, clipboard, screen, systemPreferences, dialog } from 'electron';
 import { join } from 'path';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import WebSocket from 'ws';
 import { uIOhook, UiohookKey } from 'uiohook-napi';
@@ -15,6 +16,38 @@ const WINDOW_HEIGHT = 64;
 
 // macOS fn/Globe key keycode in libuiohook (kVK_Function = 63)
 const FN_KEYCODE = 63;
+
+// ── Server process ───────────────────────────────────────────────────────────
+
+let serverProcess: ChildProcess | null = null;
+
+function launchServer(): void {
+  if (!app.isPackaged) return; // dev mode: user runs the server manually
+
+  const bin = join(process.resourcesPath, 'server', 'whisper-server');
+
+  serverProcess = spawn(bin, [], {
+    detached: false,
+    stdio: 'ignore',
+    env: { ...process.env, WHISPERFLOW_PORT: '8181' },
+  });
+
+  serverProcess.on('error', (err) => {
+    console.error('[whisper-client] Failed to start bundled server:', err.message);
+  });
+
+  serverProcess.on('exit', (code) => {
+    console.log('[whisper-client] Server exited with code', code);
+    serverProcess = null;
+  });
+}
+
+function stopServer(): void {
+  if (serverProcess) {
+    serverProcess.kill('SIGTERM');
+    serverProcess = null;
+  }
+}
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -222,6 +255,7 @@ app.whenReady().then(() => {
     }
   }
 
+  launchServer();
   overlayWindow = createOverlayWindow();
   setupFnKeyListener();
 
@@ -240,4 +274,5 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   uIOhook.stop();
   wsClient?.close();
+  stopServer();
 });

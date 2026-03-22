@@ -6,6 +6,8 @@ on:
       - claude/whisper-flow-clone-p8itt
     paths:
       - 'mac-client/**'
+      - 'whisperflow/**'
+      - 'requirements.txt'
   workflow_dispatch:
 
 jobs:
@@ -23,6 +25,46 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install server dependencies
+        run: |
+          pip install pyinstaller \
+            openai-whisper==20231117 torch numpy \
+            "fastapi==0.108.0" "uvicorn[standard]==0.30.1" \
+            "websockets==12.0" "python-multipart==0.0.9" \
+            "setuptools<70"
+
+      - name: Download Whisper tiny.en model
+        run: |
+          mkdir -p whisperflow/models
+          python - <<'EOF'
+          import whisper, os, shutil
+          # Download to default cache then copy to repo models dir
+          m = whisper.load_model("tiny.en")
+          src = os.path.expanduser("~/.cache/whisper/tiny.en.pt")
+          dst = "whisperflow/models/tiny.en.pt"
+          if not os.path.exists(dst):
+              shutil.copy(src, dst)
+          print("Model ready:", os.path.getsize(dst), "bytes")
+          EOF
+
+      - name: Build server binary (PyInstaller)
+        run: |
+          pyinstaller \
+            --onedir \
+            --name whisper-server \
+            --collect-all whisper \
+            --collect-all torch \
+            --add-data "whisperflow/models:models" \
+            --distpath mac-client/server-dist \
+            --workpath /tmp/pyinstaller-build \
+            --specpath /tmp \
+            whisperflow/server_main.py
 
       - name: Install dependencies
         working-directory: mac-client
@@ -65,7 +107,8 @@ jobs:
                ```
             4. Launch **Whisper Flow.app**
             5. Grant **Accessibility** permission when prompted (required for global fn key and paste)
-            6. Start the Whisper Flow server: `./run.sh -run-server`
+
+            The Whisper server starts automatically inside the app — no separate server step needed.
 
             > **If macOS still blocks the app:** System Settings → Privacy & Security → scroll to the security warning → **Open Anyway**.
           files: |
