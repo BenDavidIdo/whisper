@@ -1,0 +1,71 @@
+name: Build Mac App
+
+on:
+  push:
+    branches:
+      - claude/whisper-flow-clone-p8itt
+    paths:
+      - 'mac-client/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Whisper Flow.app
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mac-client/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mac-client
+        run: npm install
+
+      - name: Build
+        working-directory: mac-client
+        env:
+          # Skip code-signing — user will right-click → Open on first launch
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'true'
+        run: npm run dist
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhisperFlow-mac
+          path: |
+            mac-client/dist/*.dmg
+            mac-client/dist/*.zip
+          retention-days: 30
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/claude/whisper-flow-clone-p8itt'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-client-latest
+          name: Whisper Flow Mac Client
+          body: |
+            ## Whisper Flow Mac Client
+
+            Hold **fn** (Globe key) to dictate. Release to paste the transcript.
+
+            ### Install
+            1. Download `Whisper Flow-*.dmg`
+            2. Open the DMG → drag **Whisper Flow.app** to Applications
+            3. First launch: right-click → Open (macOS will warn about unknown developer — this is expected for unsigned apps)
+            4. Grant **Accessibility** permission when prompted (required for global fn key and paste)
+            5. Start the Whisper Flow server: `./run.sh -run-server`
+          files: |
+            mac-client/dist/*.dmg
+            mac-client/dist/*.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

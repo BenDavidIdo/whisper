@@ -34,12 +34,15 @@
     "appId": "com.whisperflow.mac-client",
     "productName": "Whisper Flow",
     "mac": {
-      "target": ["dmg", "zip"],
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "hardenedRuntime": true
+      "target": [
+        { "target": "dmg", "arch": ["universal"] },
+        { "target": "zip", "arch": ["universal"] }
+      ],
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": false
     },
     "files": ["out/**/*"],
-    "extraResources": []
+    "extraResources": [],
+    "npmRebuild": false
   }
 }
