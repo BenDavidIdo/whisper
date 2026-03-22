@@ -69,6 +69,7 @@ function float32ToInt16(float32: Float32Array): ArrayBuffer {
 export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [serverError, setServerError] = useState(false);
   const sessionRef = useRef<AudioSession | null>(null);
 
   const handleStartRecording = useCallback(async () => {
@@ -109,11 +110,16 @@ export default function App() {
         setTimeout(() => setTranscript(''), 500);
       }
     });
+    window.api.onServerError(() => {
+      setServerError(true);
+      setTimeout(() => setServerError(false), 2000);
+    });
 
     return () => {
       window.api.removeAllListeners('start-recording');
       window.api.removeAllListeners('stop-recording');
       window.api.removeAllListeners('transcript');
+      window.api.removeAllListeners('server-error');
     };
   }, [handleStartRecording, handleStopRecording]);
 
@@ -135,8 +141,15 @@ export default function App() {
           isRecording={isRecording}
         />
 
-        {/* Live transcript ticker — fades in when there's text */}
-        {transcript ? (
+        {/* Error / transcript ticker */}
+        {serverError ? (
+          <p
+            className="w-full truncate px-4 pb-2 text-center text-[11px] font-medium"
+            style={{ maxWidth: 220, color: '#ff6b6b' }}
+          >
+            ⚠ Server not running — start ./run.sh -run-server
+          </p>
+        ) : transcript ? (
           <p
             className="w-full truncate px-4 pb-2 text-center text-[11px] font-medium text-white/70"
             style={{ maxWidth: 220 }}

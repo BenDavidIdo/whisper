@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, clipboard, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, clipboard, screen, systemPreferences, dialog } from 'electron';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -131,15 +131,21 @@ async function startRecording(): Promise<void> {
   finalTranscript = '';
   partialTranscript = '';
 
+  // Show overlay immediately so the user gets feedback
+  overlayWindow?.show();
+
   try {
     wsClient = await openWebSocket();
   } catch {
     console.error('[whisper-client] Cannot reach Whisper Flow at', WS_URL);
+    overlayWindow?.webContents.send('server-error');
     isRecording = false;
+    // Hide after a moment so the user sees the error
+    await new Promise((r) => setTimeout(r, 2000));
+    overlayWindow?.hide();
     return;
   }
 
-  overlayWindow?.show();
   overlayWindow?.webContents.send('start-recording');
 }
 
@@ -194,6 +200,28 @@ function setupFnKeyListener(): void {
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 
 app.whenReady().then(() => {
+  // uIOhook and osascript both require Accessibility permission on macOS.
+  // Without it, global key events fire nothing and paste silently fails.
+  if (process.platform === 'darwin') {
+    const trusted = systemPreferences.isTrustedAccessibilityClient(false);
+    if (!trusted) {
+      // Prompt the system to show the Accessibility permission dialog
+      systemPreferences.isTrustedAccessibilityClient(true);
+      dialog.showMessageBoxSync({
+        type: 'warning',
+        title: 'Accessibility Permission Required',
+        message:
+          'Whisper Flow needs Accessibility access to detect the fn key and paste text.\n\n' +
+          '1. Open System Settings → Privacy & Security → Accessibility\n' +
+          '2. Enable Whisper Flow\n' +
+          '3. Relaunch Whisper Flow',
+        buttons: ['Quit'],
+      });
+      app.quit();
+      return;
+    }
+  }
+
   overlayWindow = createOverlayWindow();
   setupFnKeyListener();
 

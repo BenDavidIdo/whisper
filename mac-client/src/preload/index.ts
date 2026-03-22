@@ -33,6 +33,11 @@ const api = {
     });
   },
 
+  /** Fired when the Whisper Flow server is unreachable */
+  onServerError: (cb: () => void) => {
+    ipcRenderer.on('server-error', cb);
+  },
+
   /** Remove all listeners for a given channel (clean-up on unmount) */
   removeAllListeners: (channel: string) => {
     ipcRenderer.removeAllListeners(channel);
