@@ -59,9 +59,15 @@ jobs:
             ### Install
             1. Download `Whisper Flow-*.dmg`
             2. Open the DMG → drag **Whisper Flow.app** to Applications
-            3. First launch: right-click → Open (macOS will warn about unknown developer — this is expected for unsigned apps)
-            4. Grant **Accessibility** permission when prompted (required for global fn key and paste)
-            5. Start the Whisper Flow server: `./run.sh -run-server`
+            3. Remove the macOS quarantine flag (**required** — right-click → Open alone is not enough for unsigned apps):
+               ```
+               xattr -cr /Applications/Whisper\ Flow.app
+               ```
+            4. Launch **Whisper Flow.app**
+            5. Grant **Accessibility** permission when prompted (required for global fn key and paste)
+            6. Start the Whisper Flow server: `./run.sh -run-server`
+
+            > **If macOS still blocks the app:** System Settings → Privacy & Security → scroll to the security warning → **Open Anyway**.
           files: |
             mac-client/dist/*.dmg
             mac-client/dist/*.zip
