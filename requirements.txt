@@ -16,6 +16,6 @@ pytest-benchmark==4.0.0
 black==23.3.0
 pylint==3.0.3
 pylint-fail-under==0.3.0
-jiwer==3.0.4
+jiwer==4.0.0
 pandas==2.2.2
 setuptools<70
